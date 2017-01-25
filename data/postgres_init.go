@@ -1,10 +1,10 @@
 package data
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
 )
 
 const exists = `SELECT COUNT (*) FROM sqlite_master 
@@ -50,28 +50,32 @@ var queries = [...]string{
     );`,
 }
 
-//DataStore - represents the datastore
-type DataStore struct {
+//PostgresStore - datasource implemented using postgress
+type PostgresStore struct {
 	*sqlx.DB
 }
 
 //Options - options for connecting to sqlite database
 type Options struct {
-
-	//Path - path of the sqlite database file
 	UserName string
 	Password string
+	DBName   string
 }
 
 //Init - initializes the datastore
-func Init(options *Options) (*DataStore, error) {
-	db, err := sqlx.Connect("postgres", "")
+func Init(options *Options) (*PostgresStore, error) {
+	dbArgs := fmt.Sprintf(
+		"user=%s password=%s dbname=%s sslmode=disable",
+		options.UserName,
+		options.Password,
+		options.DBName)
+	db, err := sqlx.Connect("postgres", dbArgs)
 	if err != nil {
 		log.Print(err)
 		return nil, err
 	}
 	defer db.Close()
-	var sqliteDB *DataStore
+	var sqliteDB *PostgresStore
 	if err = db.Ping(); err == nil {
 		row := db.QueryRow(exists)
 		var count int
@@ -91,8 +95,13 @@ func Init(options *Options) (*DataStore, error) {
 }
 
 //connect - connects to a sqlite database file
-func connect(options *Options) (*DataStore, error) {
-	mdb, err := sqlx.Open("postgres", "")
+func connect(options *Options) (*PostgresStore, error) {
+	dbArgs := fmt.Sprintf(
+		"user=%s password=%s dbname=%s sslmode=disable",
+		options.UserName,
+		options.Password,
+		options.DBName)
+	mdb, err := sqlx.Connect("postgres", dbArgs)
 	if err != nil {
 		log.Print(err)
 	} else if err = mdb.Ping(); err != nil {
@@ -100,11 +109,11 @@ func connect(options *Options) (*DataStore, error) {
 	} else {
 		log.Print("Database opened successfuly")
 	}
-	return &DataStore{mdb}, err
+	return &PostgresStore{mdb}, err
 }
 
 //create - connects to a sqlite database file and creates schema
-func create(options *Options, db *sqlx.DB) (*DataStore, error) {
+func create(options *Options, db *sqlx.DB) (*PostgresStore, error) {
 	mdb, err := connect(options)
 	if err == nil {
 		for index, query := range queries {
