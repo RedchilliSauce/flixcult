@@ -22,7 +22,7 @@ func GetStore() Store {
 //application data store
 type Store interface {
 	GetAllUsers() (users []*User, err error)
-	GetUser(userName string) (users *User, err error)
+	GetUser(userName string) (user *User, err error)
 	GetUserWithEmail(email string) (user *User, err error)
 	UserExists(userName string) (exists bool, err error)
 	UserExistsWithEmail(email string) (exists bool, err error)

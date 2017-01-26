@@ -75,23 +75,23 @@ func Init(options *Options) (*PostgresStore, error) {
 		return nil, err
 	}
 	defer db.Close()
-	var sqliteDB *PostgresStore
+	var pgdb *PostgresStore
 	if err = db.Ping(); err == nil {
 		row := db.QueryRow(exists)
 		var count int
 		err = row.Scan(&count)
 		if err == nil {
 			if count == 0 {
-				sqliteDB, err = create(options, db)
+				pgdb, err = create(options, db)
 			} else {
-				sqliteDB, err = connect(options)
+				pgdb, err = connect(options)
 			}
 		} else {
 			log.Print(err)
 			return nil, err
 		}
 	}
-	return sqliteDB, err
+	return pgdb, err
 }
 
 //connect - connects to a sqlite database file
