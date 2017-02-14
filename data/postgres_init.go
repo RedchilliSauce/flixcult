@@ -48,7 +48,7 @@ var queries = [...]CreateQuery{
     		name        VARCHAR( 256 ) NOT NULL,
     		owner       VARCHAR( 256 ) NOT NULL,
     		description TEXT NOT NULL,
-    	    visiblity   VARCHAR( 256 ) NOT NULL,
+    	    visibility   VARCHAR( 256 ) NOT NULL,
     		PRIMARY KEY( group_id ),
     		FOREIGN KEY( owner ) REFERENCES fc_user( user_name )
     	);`,

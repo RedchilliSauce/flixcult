@@ -40,6 +40,5 @@ type Store interface {
 	UserExistsInGroup(userName, groupID string) (exists bool, err error)
 	RemoveUserFromGroup(userName, groupID string) (err error)
 	GetUsersInGroup(groupID string) (userInGroup []*User, err error)
-	GroupHasUser(groupID, userName string) (has bool, err error)
 	GetGroupsForUser(userName string) (groupsForUser []*Group, err error)
 }
