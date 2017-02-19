@@ -11,11 +11,14 @@ type Route struct {
 	MiddlewareFuncs []echo.MiddlewareFunc
 }
 
-//EmptySearch ...
-//var EmptySearch = make([]string, 0, 0)
-
 //Routes - Stores all routes(each of type Route)
 var Routes = []Route{
+	Route{
+		Methods:         []string{"POST"},
+		Path:            "/login",
+		HandlerFunc:     LoginREST,
+		MiddlewareFuncs: DefaultMWFuncs,
+	},
 	Route{
 		Methods:         []string{"GET"},
 		Path:            "/users",

@@ -1,25 +1,25 @@
 package service
 
-import "github.com/labstack/echo"
-import "github.com/labstack/echo/middleware"
+import (
+	mw "github.com/RedchilliSauce/flixcult/middleware"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+)
+
+//RestAPIBasePath - ..
+const RestAPIBasePath = "/flixcultapi"
 
 //DefaultMWFuncs - Commonly used middlewarefunc
 var DefaultMWFuncs = []echo.MiddlewareFunc{
 	middleware.Logger(),
-	middleware.BasicAuth(BasicAuth),
+	middleware.BasicAuth(middleware.DefaultBasicAuthConfig),
 }
 
-//BasicAuth function
-func BasicAuth(username string, password string, c echo.Context) bool {
-	if username == "flix" && password == "cult" {
-		return true
-	}
-	return false
-}
-
-//SetupRoutes - Set up all the routes based on Routes var
-func SetupRoutes(e *echo.Echo) {
+//SetupRestRoutes - Set up all the routes based on Routes var
+func SetupRestRoutes(e *echo.Echo) {
+	g := e.Group(RestAPIBasePath)
+	g.Use(middleware.JWTWithConfig(mw.FlixCultJwtConfig))
 	for _, r := range Routes {
-		e.Match(r.Methods, r.Path, r.HandlerFunc, r.MiddlewareFuncs...)
+		g.Match(r.Methods, r.Path, r.HandlerFunc, r.MiddlewareFuncs...)
 	}
 }

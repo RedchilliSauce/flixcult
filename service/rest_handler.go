@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/RedchilliSauce/flixcult/data"
+	"github.com/RedchilliSauce/flixcult/middleware"
 	"github.com/labstack/echo"
 )
 
@@ -22,21 +23,27 @@ type GroupUser struct {
 	GroupID string `json:"groupID"`
 }
 
-/*
-//UserExistsInGroup - Group exists in user
-type UserExistsInGroup struct {
-	GrpUser GroupUser
-	Email   string
-	Exists  bool
+//LoginREST - function to login. Expects POST request and returns JWT token
+func LoginREST(c echo.Context) error {
+	var credential middleware.Credential
+
+	body, err := ioutil.ReadAll(io.LimitReader(c.Request().Body, ReqBodyLimit))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, "Bad request")
+	}
+	if err = json.Unmarshal(body, credential); err != nil {
+		return c.JSON(http.StatusBadRequest, "Incorrect JSON format")
+	}
+
+	isValid, isAdmin := middleware.BasicAuthenticate(credential.Name, credential.Password)
+	if !isValid {
+		return c.JSON(http.StatusUnauthorized, "Username-password combination invalid. Try again.")
+	}
+
+	tokenString := middleware.GenerateJWT(middleware.ClaimsInp{IsAdmin: isAdmin, Name: credential.Name})
+	return c.JSON(http.StatusOK, map[string]string{"token": tokenString})
 }
 
-//EmailExistsInGroup - Group exists in user
-type EmailExistsInGroup struct {
-	GroupID string
-	Email   string
-	Exists  bool
-}
-*/
 //GetAllUsers - Get list of users- Implemented with Echo JSON Streaming to support large JSON objects
 func GetAllUsers(c echo.Context) error {
 	db := data.GetStore()
@@ -75,7 +82,6 @@ func GetUserByFilter(c echo.Context) error {
 	}
 
 	email := params.Get("email")
-
 	if email != "" {
 		user, err := db.GetUserWithEmail(email)
 		if err != nil {
@@ -98,7 +104,7 @@ func CreateUser(c echo.Context) error {
 		//TODO some common error function? Or just propogate?
 	}
 	if err = json.Unmarshal(body, user); err != nil {
-		return c.JSON(http.StatusBadRequest, nil)
+		return c.JSON(http.StatusBadRequest, "Wrong JSON format")
 	}
 	if err = db.CreateUser(&user); err != nil {
 		return c.JSON(http.StatusInternalServerError, nil)
@@ -375,7 +381,7 @@ func GroupHasUser(c echo.Context) error {
 			c.JSON(http.StatusBadRequest, "Username doesn't exist")
 		}
 
-		hasUser, err = db.GroupHasUser(groupID, uName)
+		hasUser, err = db.UserExistsInGroup(uName, groupID)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 			//TODO some common error function? Or just propogate?
@@ -391,15 +397,19 @@ func GroupHasUser(c echo.Context) error {
 		}
 
 		uName = user.Name
-		hasUser, err = db.GroupHasUser(groupID, user.Name)
+		hasUser, err = db.UserExistsInGroup(uName, groupID)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 			//TODO some common error function? Or just propogate?
 		}
-
 	}
 
-	return c.JSON(http.StatusOK, hasUser)
+	userExistsInGroup := "false"
+	if hasUser {
+		userExistsInGroup = "true"
+	}
+	return c.JSON(http.StatusOK,
+		map[string]string{"groupID": groupID, "name": uName, "userExistsInGroup": userExistsInGroup})
 }
 
 //GetGroupsForUser - Get list of groups that a user is a part of

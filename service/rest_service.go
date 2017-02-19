@@ -7,6 +7,6 @@ import (
 //StartRESTService - Starts up a new REST API service
 func StartRESTService(e *echo.Echo, hostname string, port string) {
 	// TODO - Add any common middleware for REST
-	SetupRoutes(e)
+	SetupRestRoutes(e)
 	e.Start(hostname + ":" + port)
 }
